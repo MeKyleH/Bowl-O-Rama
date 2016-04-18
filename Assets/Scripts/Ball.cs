@@ -9,12 +9,14 @@ public class Ball : MonoBehaviour {
 	private Rigidbody rigidBody;
 	private AudioSource audioSource;
 	private Vector3 ballStartPos;
+	private Quaternion ballStartRot;
 
 	void Start () {
 		rigidBody = GetComponent<Rigidbody> ();
 		rigidBody.useGravity = false;
 
 		ballStartPos = transform.position;
+		ballStartRot = transform.rotation;
 	}
 
 	void Update() {
@@ -37,6 +39,7 @@ public class Ball : MonoBehaviour {
 		inPlay = false;
 
 		rigidBody.position = ballStartPos;
+		rigidBody.rotation = ballStartRot;
 		rigidBody.useGravity = false;
 		rigidBody.velocity = Vector3.zero;
 		rigidBody.angularVelocity = Vector3.zero;

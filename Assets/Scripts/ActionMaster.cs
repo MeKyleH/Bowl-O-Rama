@@ -1,51 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-public class ActionMaster {
-
-	public enum Action {Tidy, Reset, EndTurn, EndGame};
-
-	private int[] bowls = new int[21];
-	private int frame = 1;
-
-	public Action Bowl(int pins) {
-		if (pins < 0 || pins > 10) {
-			throw new UnityException ("Pins must be between 0 and 10.");
+public static class ActionMaster {
+	public enum Action {Tidy, Reset, EndTurn, EndGame, Undefined};
+	
+	public static Action NextAction (List<int> rolls) {
+		Action nextAction = Action.Undefined;
+		
+		for (int i = 0; i < rolls.Count; i++) { // Step through rolls
+			
+			if (i == 20) {
+				nextAction = Action.EndGame;
+			} else if ( i >= 18 && rolls[i] == 10 ){ // Handle last-frame special cases
+				nextAction = Action.Reset;
+			} else if ( i == 19 ) {
+				if (rolls[18]==10 && rolls[19]==0) {
+					nextAction = Action.Tidy;
+				} else if (rolls[18] + rolls[19] == 10) {
+					nextAction = Action.Reset;
+				} else if (rolls [18] + rolls[19] >= 10) {  // Roll 21 awarded
+					nextAction = Action.Tidy;
+				} else {
+					nextAction = Action.EndGame;
+					ScoreDisplay.finalScore = SetFinalScore (rolls);
+				}
+			} else if (i % 2 == 0) { // First bowl of frame
+				if (rolls[i] == 10) {
+					rolls.Insert (i, 0); // Insert virtual 0 after strike
+					i++; 				// Account for the virtual 0
+					nextAction = Action.EndTurn;
+				} else {
+					nextAction = Action.Tidy;
+				}
+			} else { // Second bowl of frame
+				nextAction = Action.EndTurn;
+			}
 		}
-		bowls [frame - 1] = pins;
-		if (frame == 21) {
-			return Action.EndGame;
-		}
-
-		//end of game
-		if (frame >= 19 && Bowl21Awarded ()) {
-			frame++;
-			return Action.Reset;
-		} else if (frame == 20 && !Bowl21Awarded()) {
-			return Action.EndGame;
-		}
-
-		if (pins == 10) {
-			frame += 2;
-			return Action.EndTurn;
-		}
-
-		// end of frame
-		if (frame % 2 == 0) {
-			frame++;
-			return Action.EndTurn;
-		} else //mid frame or last frame
-		{
-			frame++;
-			return Action.Tidy;
-		}
-
-		//if no known action is passed
-		throw new UnityException ("Not sure what action to return.");
+		return nextAction;
 	}
 
-	//checks frame 19 and 20 - array starts at 0
-	private bool Bowl21Awarded() {
-		return (bowls [18] + bowls [19] >= 10);
+	private static int SetFinalScore(List<int> rolls) {
+		int runningTotal = 0;
+		for (int i = 0; i < rolls.Count; i++) {
+			runningTotal += rolls[i];
+		}
+		return runningTotal;
 	}
 }
